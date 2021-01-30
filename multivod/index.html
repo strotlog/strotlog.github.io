@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <meta name="og:title" content="multi vod">
+  <meta name="og:description" content="Watch multiple Twitch VODs synced up.">
+  <title>multi vod</title>
+<script>
+let vodarr = []
+
+window.addEventListener("load", function(){
+  var paramstr = window.location.search
+  if (paramstr == '?new') {
+    document.getElementById('newform').style.display = 'block'
+    document.getElementById('twitches').style.display = 'none'
+    document.getElementById('newlink').style.display = 'none'
+  } else if (paramstr.startsWith('?vods=')) {
+    vodarr = paramstr.split('?vods=')[1].split(",").map((str) => {
+      leftright = str.split('@')
+      return {vid: leftright[0], time: leftright[1]}
+    })
+    if (vodarr.length >= 3) {
+      document.getElementById('div0').style.height = '50%'
+      document.getElementById('div1').style.height = '50%'
+      document.getElementById('div2').style.display = 'inline-block'
+      document.getElementById('div3').style.display = 'inline-block'
+    }
+    console.log(vodarr)
+    for (let i = 0; i < vodarr.length; i++) {
+      document.getElementById('iframe' + i).src = 'https://player.twitch.tv/?video=' + vodarr[i].vid + "&time=" + vodarr[i].time + "&muted=true&autoplay=true&parent=strotlog.github.io"
+      fetch('https://api.twitch.tv/kraken/videos/'+vodarr[i].vid+'?client_id=z4rxnaraqoc2oh7acse0cfpr1zineq').then((response) => {
+        if (response.status != 200) { return Promise.resolve(null); }
+        console.log(response.status)
+        return response.json()
+      }).then((json) => {
+        vodarr[i].channel = json.channel.display_name
+        document.title = vodarr.map(x=>x.channel).join(' x ') + ' (multi vod)'
+        console.log('title i='+i+': '+vodarr[i].channel + '..' + vodarr.map(x=>x.channel).join('|'))
+        document.querySelector('meta[name="og:title"]').setAttribute('content', document.title); // might as well try?
+      })
+    }
+  }
+  
+  
+  // on click stuff
+  document.getElementById('innerplus').onclick = function () {
+    // unhide Runner 3, Runner 4
+    console.log(document.getElementById('plus').style.display)
+    document.getElementById('plus').style.display = 'none'
+    document.getElementById('3').style.display = 'block'
+    document.getElementById('4').style.display = 'block'
+    console.log(document.getElementById('plus').style.display)
+  }
+  document.getElementById('create').onclick = function () {
+    // parse the URLs given
+    var allvodstr = [0,1,2,3].map((i) => {
+      var spl = document.getElementById('vodinp' + i).value.split("twitch.tv/videos/")
+      if (spl.length == 2) { return spl[1]; } else { return ""; }
+      // 386011413?t=01h15m53s => 386011413@01h15m53s
+    }).map((postslash) => postslash.replace("?t=", "@")).join(",").replace(/,*$/, "")
+    console.log(allvodstr)
+    window.location.search = "?vods=" + allvodstr
+  }
+});
+
+</script>
+</head>
+<style>
+  a,span {
+    color: orange;
+    text-decoration: none;
+    font-weight: bold;
+    cursor: pointer;
+  }
+</style>
+<body style="background: black; color: white;">
+<div id="newform" style="display: none"> <!-- hidden until ?new -->
+<form>
+  <p>Paste twitch VOD URLs with timestamp here:</p>
+  <p>Runner 1 <input id="vodinp0" size="54"></input></p>
+  <p>Runner 2 <input id="vodinp1" size="54"></input></p>
+  <p id='plus'>&emsp;&emsp;&emsp;&emsp;<span id="innerplus">+</span></p>
+  <p style="display: none" id="3">Runner 3 <input id='vodinp2' size="54"></input></p>
+  <p style="display: none" id="4">Runner 4 <input id='vodinp3' size="54"></input></p>  
+  <p>&emsp;<span id="create">Create multi</span></p>
+</form>
+</div>
+<div id="twitches" style="width: 100%; height: 93vh">
+  <div id="div0" style="width:49%; height: 100%; display:inline-block;">     
+    <iframe
+        id="iframe0"
+        src="about:blank"
+        height="100%"
+        width="100%"
+        frameborder="<frameborder>"
+        scrolling="no"
+        allowfullscreen="true">
+      </iframe>
+  </div>
+  <div id="div1" style="width:49%; height: 100%; display:inline-block;">
+    <iframe
+        id="iframe1"
+        src="about:blank"
+        height="100%"
+        width="100%"
+        frameborder="<frameborder>"
+        scrolling="no"
+        allowfullscreen="true">
+      </iframe>
+  </div>
+  <div id="div2" style="width:49%; height: 50%; display:none;">
+    <iframe
+        id="iframe2"
+        src="about:blank"
+        height="100%"
+        width="100%"
+        frameborder="<frameborder>"
+        scrolling="no"
+        allowfullscreen="true">
+      </iframe>
+  </div>
+  <div id="div3" style="width:49%; height: 50%; display:none;">
+    <iframe
+        id="iframe3"
+        src="about:blank"
+        height="100%"
+        width="100%"
+        frameborder="<frameborder>"
+        scrolling="no"
+        allowfullscreen="true">
+      </iframe>
+    </td>
+  </tr>
+</div>
+<div id="newlink" style="color: #808080;">
+  <a href="?new">Create New Multi-Vod View</a>
+  &emsp;&emsp;&emsp;&emsp;by strotlog
+</div>
+</body>
+</html>
